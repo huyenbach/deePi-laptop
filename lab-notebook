@@ -1,0 +1,5 @@
+Jun-23: Set up environment + experiment with opencv + starting black frame filter
+    - OpenCV detection is working well but again, box merging values are hardcoded so limited adaptability across videos 
+    - Started on confidence score calculation for OpenCV. Formula very simple now - 3 components: brightness, size, fill. Size and brightness gets the highest weight but fill not really. Need more complex calculations to avoid false positives later.
+    - Set up git and github so can version code now :D
+    
