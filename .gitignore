@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Local settings / secrets
+.env
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Output folders
+outputs/
+runs/
+masks/
+boxes/
+debug/
+logs/
+
+# Videos / raw data
+data/
+videos/
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Large model files
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Project-specific large/output folders
+video data/
+test_converted*/
+thresh_videos/
+tracked-frames/
+train/
+
+# Uppercase video extensions too
+*.MP4
+*.AVI
+*.MOV
+*.MKV
