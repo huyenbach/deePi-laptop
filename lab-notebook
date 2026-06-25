@@ -2,4 +2,17 @@ Jun-23: Set up environment + experiment with opencv + starting black frame filte
     - OpenCV detection is working well but again, box merging values are hardcoded so limited adaptability across videos 
     - Started on confidence score calculation for OpenCV. Formula very simple now - 3 components: brightness, size, fill. Size and brightness gets the highest weight but fill not really. Need more complex calculations to avoid false positives later.
     - Set up git and github so can version code now :D
-    
+    - Finished black frame filter (150 frames)
+        - 50 frames from each camera, randomly sampled videos from varying hours of the day, each frame is at least 10 seconds (260 frames) apart 
+            Frame size: 1920 x 1080 pixels
+        - Black frame criteria:
+            Global darkness: max average brightness 10/255; max median brightness 8/255, 99th percentile brightness <= 28/255, 99.9th percentile brightness <= 60, max 1.5% pixels brighter than 20, 0.3% brighter than 40, 0.08% brighter than 6 (reject frames with small but clearly bright objects)
+            Entropy: max 4.0 (truly black fame has low variation so this allows some camera noise but rejects frames with too much visible variation)
+            Localization: intended to reject small visible animal somwhere in an almost/entirely dark frame / few but clustered bright pixels 
+                Reject if largest bright blob > 3000 pixels (0.14% of the frame)
+            IN SUMMARY: globally dark + mostly no bright pixels + no large localized objects ==> black frame 
+Jun-24: Random sample active frames 
+    - Capture active frames across 3 cameras and varying times of day: Use the same sampling technique as black-frame extracts 
+    - Workflow: sample videos - capture active frames (put all into same folder) - make GUI for review images and assign into folders 
+    - Active frame criteria:
+        
