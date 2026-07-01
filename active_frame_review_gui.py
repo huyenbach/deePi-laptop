@@ -10,7 +10,7 @@ from PIL import Image, ImageTk, ImageEnhance
 
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
-DISPLAY_BRIGHTNESS_FACTOR = 1.75 
+DISPLAY_BRIGHTNESS_FACTOR = 2.0
 LABEL_FOLDERS = [
     "animal",
     "particulate",
@@ -424,7 +424,7 @@ def run_gui(batch_dir, fps=None):
 
 if __name__ == "__main__":
     # Edit this path:
-    BATCH_DIR = r"/Users/alopias/Desktop/Huyen-deePi/deePi-laptop/active_review_batch_001"
+    BATCH_DIR = r"active_review_batch_003"
 
     # Edit this if needed:
     FPS = 26
