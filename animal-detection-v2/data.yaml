@@ -1,0 +1,12 @@
+names:
+- organism
+nc: 1
+roboflow:
+  license: CC BY 4.0
+  project: animal-detection-v2
+  url: https://universe.roboflow.com/huyens-workspace-coh7b/animal-detection-v2/dataset/1
+  version: 1
+  workspace: huyens-workspace-coh7b
+test: ../test/images
+train: ../train/images
+val: ../valid/images

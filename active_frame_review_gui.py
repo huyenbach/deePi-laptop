@@ -424,7 +424,7 @@ def run_gui(batch_dir, fps=None):
 
 if __name__ == "__main__":
     # Edit this path:
-    BATCH_DIR = r"active_review_batch_003"
+    BATCH_DIR = r"active_review_batch_004"
 
     # Edit this if needed:
     FPS = 26

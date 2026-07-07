@@ -14,5 +14,72 @@ Jun-23: Set up environment + experiment with opencv + starting black frame filte
 Jun-24: Random sample active frames 
     - Capture active frames across 3 cameras and varying times of day: Use the same sampling technique as black-frame extracts 
     - Workflow: sample videos - capture active frames (put all into same folder) - make GUI for review images and assign into folders 
+    - Active frame preprocessing:
+        - Convert frame to grayscale and blur (to reduce tiny pixel noises)
+        - frame buffer (deque max len 3) to compare current with previous few frames and catch stuff that flicker or visible for just a moment
+        - threshold accumulated image (strict=20, broad=15)
+            any pixel brighter than threshold converted to white (255), anything below threshold becomes background (0)
+        - clean up binary mask with image morphology (ellipse, close) - connect nearby bright regions
+        - count bright foreground pixels 
     - Active frame criteria:
-        
+        After preprocessing (grayscale convert, blur, threshold, morphology, etc.): >500(strict) or >100(broad) pixels brighter than grayscale intensity 20(strict) or 15(broad) /255 
+        AND
+        pHash(strict=8, broad=5): save only if frame perceptual hash differs from previous saved frame by >8 bits (0=identical, 64=extremely dif)
+Week of Jun-29:
+    Get active frames in 4 batches, each time dif random seed:
+        - Batch 1: strict, 150 frames (50 each cam)
+        - Batch 2: broad, 1500 frames (500 each)
+        - Batch 3: strict, ~1496 frames (not enough on cam 1 or 2 - can't rmb)
+        - Batch 4: strict, ~1500 frames (500 each)
+        Batch 3,4: many similar looking frames (same videos sampled even with dif seed because sampled almost through every video - ~1750 vids per cam to get enough frames)
+    Made a GUI to sort frames: press buttons --> move frames into folder + update a csv of metadata and label; move frames into unreviewed to sort again
+    Separate particulate vs animal frames:
+        - Batch 1,2,4: self annotated, adjusted several times (mostly through particulate folders but did everything again at the end)
+        - Batch 3: self annotated + Brendan: large discrepancies; guidelines and examples uncertain (need to update)
+            - First try: Huyen ~650/1500 animals, Brendan ~1000/1500 animals 
+            - Need to brief again and annotate again with new criteria and calculate IAA
+    Update animal criteria to be stricter:
+        Particulate:
+            round, small, faint, etc. anything uncertain to be animal --> particualte
+            can be big, bright, etc. but no clear shape/cannot be confident that it's an animal
+        Animal:
+            clear shape/structure
+            can be small but most of the stuff marked animals so far are not tiny (small-med-large)
+        Be strict with particulate/animal filter because we're only interested in bigger animals (maybe not copepods) and want to be consistent/confident to train YOLO
+YOLOv1 training:
+    Before calculating IAA and briefing Brendan again (all frames used were sorted by Huyen)
+    ~830 animal frames from 4 batches (no duplicates)
+    Annotated 415 animal frames
+        - Rectangle tool: manually draw tight-ish bounding boxes (no AI labeling/smart polygon tool)
+        - Only annotated what I think were animals (this is sujective)
+        - Vaguely assigned size-based classes: small(285)-med(110)-large(29)
+    Added 46 particulate frames (marked null), no black frames
+    No preprocessing/augmentation/normalization
+    Split: random split 369 train / 92 valid / no test (yet)
+    Configs: 
+            model = YOLO("yolo11s.pt")
+            results = model.train(
+                data = Path.cwd() / "animal-detection-v2" / "data.yaml",
+                epochs=200, imgsz=1280, device = 'mps', batch=2, cache=False,
+                amp=False, 
+                patience=50,
+                name="test-v1"
+            )
+    Saved weights: 
+            200 epochs completed in 5.813 hours.
+            Optimizer stripped from /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-8/weights/last.pt, 19.3MB
+            Optimizer stripped from /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-8/weights/best.pt, 19.3MB
+    Results:
+            Ultralytics 8.4.86 🚀 Python-3.13.2 torch-2.12.1 MPS (Apple M2 Pro)
+            YOLO11s summary (fused): 101 layers, 9,413,187 parameters, 0 gradients, 21.3 GFLOPs
+                            Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 23/23 4.7it/s 4.9s0.2s
+                            all         92         85      0.842       0.88      0.917      0.412
+            Speed: 0.6ms preprocess, 24.3ms inference, 0.0ms loss, 13.3ms postprocess per image
+            Results saved to /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-8
+    Next steps:
+        - Validate w Brendan / Update sorting + labeling guidelines
+        - Try to find more large objects (maybe not needed?) to balance dataset
+        - Select images for test set 
+        - Train same model w augmentation and preprocessing / normalization 
+        - Explore roboflow features: active learning, model diagnostics, etc. 
+        - Expand dataset (once cross-validated w/ Brendan)
