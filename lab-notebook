@@ -46,6 +46,7 @@ Week of Jun-29:
             clear shape/structure
             can be small but most of the stuff marked animals so far are not tiny (small-med-large)
         Be strict with particulate/animal filter because we're only interested in bigger animals (maybe not copepods) and want to be consistent/confident to train YOLO
+Jul-3:
 YOLOv1 training:
     Before calculating IAA and briefing Brendan again (all frames used were sorted by Huyen)
     ~830 animal frames from 4 batches (no duplicates)
@@ -80,6 +81,34 @@ YOLOv1 training:
         - Validate w Brendan / Update sorting + labeling guidelines
         - Try to find more large objects (maybe not needed?) to balance dataset
         - Select images for test set 
-        - Train same model w augmentation and preprocessing / normalization 
+        - Train same model w augmentation / preprocessing / normalization 
         - Explore roboflow features: active learning, model diagnostics, etc. 
         - Expand dataset (once cross-validated w/ Brendan)
+Jul-7:
+YOLOv1 w/ augmentation training:
+    No preprocessing/normalization
+    Augmentation steps: Outputs per training example: 3
+                        Crop: 0% Minimum Zoom, 20% Maximum Zoom
+                        Brightness: Between -15% and +15%
+                        Blur: Up to 2.5px
+                        Noise: Up to 0.06% of pixels
+    Configs:
+            model = YOLO("yolo11s.pt")
+            results = model.train(
+                data = Path.cwd() / "animal-detection-v2-2" / "data.yaml",
+                epochs=200, imgsz=1280, device = 'mps', batch=2, cache=False,
+                amp=False, 
+                patience=50,
+                name="test-v1-aug"
+            )
+    Saved weights:  
+            135 epochs completed in 11.163 hours.
+            Optimizer stripped from /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-aug/weights/last.pt, 19.3MB
+            Optimizer stripped from /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-aug/weights/best.pt, 19.3MB
+    Results:
+            YOLO11s summary (fused): 101 layers, 9,413,187 parameters, 0 gradients, 21.3 GFLOPs
+                        Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 23/23 5.5it/s 4.2s0.2s
+                        all         92         85      0.844       0.83      0.918      0.407
+            Speed: 0.5ms preprocess, 20.7ms inference, 0.0ms loss, 13.0ms postprocess per image
+            Results saved to /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-aug
+    
