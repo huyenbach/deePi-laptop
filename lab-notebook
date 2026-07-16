@@ -87,6 +87,7 @@ YOLOv1 training:
 Jul-7:
 YOLOv1 w/ augmentation training:
     No preprocessing/normalization
+    x3 frames (~1200 total)
     Augmentation steps: Outputs per training example: 3
                         Crop: 0% Minimum Zoom, 20% Maximum Zoom
                         Brightness: Between -15% and +15%
@@ -111,4 +112,108 @@ YOLOv1 w/ augmentation training:
                         all         92         85      0.844       0.83      0.918      0.407
             Speed: 0.5ms preprocess, 20.7ms inference, 0.0ms loss, 13.0ms postprocess per image
             Results saved to /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-aug
-    
+Jul-8:
+YOLOv1 w/ normalization (clahe auto adjust contrast):
+    No augmentation
+    Preprocessing (on roboflow): auto adjust contrast
+    Configs:
+            model = YOLO("yolo11s.pt")
+            results = model.train(
+                data = Path.cwd() / "animal-detection-v2-4" / "data.yaml",
+                epochs=200, imgsz=1280, device = 'mps', batch=2, cache=False,
+                amp=False, 
+                patience=50,
+                name="test-v1-clahe"
+            )
+    Saved weights:
+            200 epochs completed in 5.987 hours.
+            Optimizer stripped from /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-clahe/weights/last.pt, 19.3MB
+            Optimizer stripped from /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-clahe/weights/best.pt, 19.3MB
+    Results:
+            YOLO11s summary (fused): 101 layers, 9,413,187 parameters, 0 gradients, 21.3 GFLOPs
+                            Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 23/23 5.0it/s 4.6s0.2s
+                            all         92         85      0.915      0.788      0.903      0.436
+            Speed: 0.7ms preprocess, 21.1ms inference, 0.0ms loss, 13.1ms postprocess per image
+            Results saved to /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-clahe
+Jul-10:
+YOLOv2 raw - add more frames to set (double + more particulate frames)
+    No aug/normalization
+    922 total (95 particulate / 827 animal) - random split 75 / 15 / 10 (some valid from before and rest is new)
+    Finetuned on top of v1 raw 
+    Configs:
+            model1 = YOLO("/Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-8/weights/best.pt")
+            results = model1.train(
+                data = Path.cwd() / "animal-detection-v3-1" / "data.yaml",
+                epochs=200, imgsz=1280, device = 'mps', batch=2, cache=False,
+                amp=False, 
+                patience=50,
+                name="test-v2"
+            )
+    Saved weights:
+            EarlyStopping: Training stopped early as no improvement observed in last 50 epochs. Best results observed at epoch 71, best model saved as best.pt.
+            To update EarlyStopping(patience=50) pass a new patience value, i.e. `patience=300` or use `patience=0` to disable EarlyStopping.
+            121 epochs completed in 6.517 hours.
+    Results:
+            YOLO11s summary (fused): 101 layers, 9,413,187 parameters, 0 gradients, 21.3 GFLOPs
+                            Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 36/36 5.2it/s 7.0s0.2s
+                            all        142        128      0.857      0.844      0.908      0.386
+            Speed: 0.7ms preprocess, 23.4ms inference, 0.0ms loss, 13.3ms postprocess per image
+            Results saved to /Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v2
+Jul-13:
+Compare all 4 versions so far:
+    Great precision ~0.9 consistently given a small training set (~450)
+    Pay attention to train and val box loss
+    Augmentation doesn't improve model 
+    Normalizaton (clahe) improves precision very slightly (slightly higher mAP50-95) 
+        Not enough to conclude if aug/norm helps. Could be some variability in small training set too 
+        Test all of these again on the bigger set 
+    Expanding training set (v2) doesn't improve model (maybe a little of precision) - there is nothing much to for model to learn now. Could be either model is doing too good alr or training set is not good enough --> check 
+    Go through training set again:
+        Redo the split (split by video) if needed, set out test set now 
+        Spot if data leak? could be why we are seeing very high mAP (could also be bc dataset problem is simple)
+Calculated IAA on batch 003:
+    First IAA: 
+    Second IAA:
+            Percent agreement: 0.851
+            Cohen's kappa: 0.689
+
+                                Brendan: particulate  Brendan: animal
+            Huyen: particulate                   827              101
+            Huyen: animal                         65              378
+Jul-15:
+YOLOv2 w/ clahe:
+    Finetuned with more image (922) on top of yolov1 clahe 
+    Preprocessing: auto-adjust contrast
+    Configs:
+            model1 = YOLO("/Users/alopias/Desktop/Huyen-deePi/deePi-laptop/runs/detect/test-v1-clahe/weights/best.pt")
+            results = model1.train(
+                data = Path.cwd() / "animal-detection-v3-2" / "data.yaml",
+                epochs=200, imgsz=1280, device = 'mps', batch=2, cache=False,
+                amp=False, 
+                patience=50,
+                name="test-v2-clahe"
+            )
+    Results:
+            EarlyStopping: Training stopped early as no improvement observed in last 50 epochs. Best results observed at epoch 1, best model saved as best.pt.
+            51 epochs completed in 2.817 hours.
+            YOLO11s summary (fused): 101 layers, 9,413,187 parameters, 0 gradients, 21.3 GFLOPs
+                            Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 36/36 5.1it/s 7.1s0.2s
+                            all        142        128      0.734      0.842       0.85      0.372
+            Speed: 0.5ms preprocess, 21.0ms inference, 0.0ms loss, 13.6ms postprocess per image
+    Summary: no improvement at all with clahe despite expanding the dataset.
+Jul-16:
+    Resplit the 922 image training set (active frames only first): 
+        All frames from same vid go to same split (max 2 frames per vid seen)
+        Split 70 / 15 / 15
+    Check:
+        CSV tables for all frames + source video + camera
+        Count # frames per video 
+        Assign videos to split to best match the 70-15-15 split (compare all 3 splits at each vid) - not split by camera 
+    --> All done in python.
+    Particulate frames resplit:
+        Aimed for 10% particulate frames --> added 93 particulates
+        Random sampled from batch 4 (huyen) and batch 3 (brendan)
+        Same split
+        Check for existing vid in each split - if particulate from video that's already in that split --> go to that split, if new vid then compare 3 split options like before
+        Append directly to split + update existing frames_table csv 
+    Trained yolov2 raw resplit: same configs as yolov2 raw, just point to resplit dataset
