@@ -200,20 +200,79 @@ YOLOv2 w/ clahe:
                             Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 36/36 5.1it/s 7.1s0.2s
                             all        142        128      0.734      0.842       0.85      0.372
             Speed: 0.5ms preprocess, 21.0ms inference, 0.0ms loss, 13.6ms postprocess per image
-    Summary: no improvement at all with clahe despite expanding the dataset.
+    Summary: no improvement at all with clahe despite expanding the dataset - lower mAP
 Jul-16:
-    Resplit the 922 image training set (active frames only first): 
-        All frames from same vid go to same split (max 2 frames per vid seen)
-        Split 70 / 15 / 15
-    Check:
-        CSV tables for all frames + source video + camera
-        Count # frames per video 
-        Assign videos to split to best match the 70-15-15 split (compare all 3 splits at each vid) - not split by camera 
+Resplit the 922 image training set (active frames only first): 
+    All frames from same vid go to same split (max 2 frames per vid seen)
+    Split 70 / 15 / 15
+Check:
+    CSV tables for all frames + source video + camera
+    Count # frames per video 
+    Assign videos to split to best match the 70-15-15 split (compare all 3 splits at each vid) - not split by camera 
     --> All done in python.
-    Particulate frames resplit:
-        Aimed for 10% particulate frames --> added 93 particulates
-        Random sampled from batch 4 (huyen) and batch 3 (brendan)
-        Same split
-        Check for existing vid in each split - if particulate from video that's already in that split --> go to that split, if new vid then compare 3 split options like before
-        Append directly to split + update existing frames_table csv 
-    Trained yolov2 raw resplit: same configs as yolov2 raw, just point to resplit dataset
+Particulate frames resplit:
+    Aimed for 10% particulate frames --> added 93 particulates
+    Random sampled from batch 4 (huyen) and batch 3 (brendan)
+    Same split
+    Check for existing vid in each split - if particulate from video that's already in that split --> go to that split, if new vid then compare 3 split options like before
+    Append directly to split + update existing frames_table csv 
+Trained yolov2 raw resplit: same configs as yolov2 raw but pointed to the resplit dataset
+YOLOv2 resplit raw:
+    Configs:
+            model = YOLO("yolo11s.pt")
+            results = model.train(
+                data = Path.cwd() / "animal-detection-v4-split" / "data.yaml",
+                epochs=200, imgsz=1280, device = 'mps', batch=2, cache=False,
+                amp=False, 
+                patience=50,
+                name="test-v2-resplit-raw"
+            )
+    Results:
+            EarlyStopping: Training stopped early as no improvement observed in last 50 epochs. Best results observed at epoch 132, best model saved as best.pt.
+            182 epochs completed in 8.772 hours.
+            YOLO11s summary (fused): 101 layers, 9,413,187 parameters, 0 gradients, 21.3 GFLOPs
+                            Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 35/35 5.1it/s 6.9s0.2s
+                            all        139        128       0.74      0.836      0.874      0.409
+            Speed: 0.6ms preprocess, 24.3ms inference, 0.0ms loss, 12.2ms postprocess per image
+Summary: similar performance to random split - slightly lower mAP50 but same mAP50-95. There was some data leak but very few (only max 2 frames per vid) so did not overfit much.
+
+Jul-20:
+train yolov2 resplit raw but with yolo26 (same resplit set):
+    Configs:
+            model = YOLO("yolo26s.pt")
+            results = model.train(
+                data = Path.cwd() / "animal-detection-v4-split" / "data.yaml",
+                epochs=200, imgsz=1280, device = 'mps', batch=2, cache=False,
+                amp=False, 
+                patience=50,
+                name="yolo26-v2-resplit-raw"
+            )
+    Results:
+            EarlyStopping: Training stopped early as no improvement observed in last 50 epochs. Best results observed at epoch 113, best model saved as best.pt.
+            163 epochs completed in 9.606 hours.
+            YOLO26s summary (fused): 122 layers, 9,465,567 parameters, 0 gradients, 20.5 GFLOPs
+                            Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 35/35 5.5it/s 6.4s0.2s
+                            all        139        128      0.827       0.86      0.866      0.426
+            Speed: 0.5ms preprocess, 33.9ms inference, 0.0ms loss, 0.3ms postprocess per image
+Jul-21:
+Train yolo26 v2 resplit w/ clahe:
+    Configs:
+            model = YOLO("yolo26s.pt")
+            results = model.train(
+                data = Path.cwd() / "animal-detection-v5-1" / "data.yaml",
+                epochs=200, imgsz=1280, device = 'mps', batch=2, cache=False,
+                amp=False, 
+                patience=50,
+                name="yolo26-v2-resplit-clahe"
+            )
+    Resuls:
+            EarlyStopping: Training stopped early as no improvement observed in last 50 epochs. Best results observed at epoch 101, best model saved as best.pt.
+            151 epochs completed in 8.749 hours.
+            YOLO26s summary (fused): 122 layers, 9,465,567 parameters, 0 gradients, 20.5 GFLOPs
+                            Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100% ━━━━━━━━━━━━ 35/35 5.5it/s 6.3s0.2s
+                            all        138        127      0.836      0.795      0.887      0.443
+            Speed: 0.7ms preprocess, 33.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+Final IAA (review batch 005):
+    900 frames (strict filter)
+        Percent agreement: 0.778
+        Cohen's kappa: 0.569
